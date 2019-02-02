@@ -474,6 +474,7 @@ func SSO_Login(w http.ResponseWriter, r *http.Request) {
 					Name:    "OATMEALSSL",
 					Value:   cookie,
 					Domain:  SSODomain,
+					Path:    "/",
 					Expires: time.Now().Add(1 * time.Hour),
 				},
 			)
@@ -589,6 +590,7 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 	if cookie, err := r.Cookie("CHOCOLATECHIPSSL"); err == nil {
 		cookie.Value = ""
 		cookie.Expires = time.Unix(0, 0)
+		cookie.Path = "/"
 		http.SetCookie(w, cookie)
 	}
 
