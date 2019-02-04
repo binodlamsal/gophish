@@ -94,6 +94,18 @@ func (ur UserRole) Name() string {
 	return role.Name
 }
 
+// DisplayName returns this role's display name
+func (ur UserRole) DisplayName() string {
+	role := Role{}
+	err := db.Where("rid = ?", ur.Rid).First(&role).Error
+
+	if err != nil {
+		return "Unknown"
+	}
+
+	return role.DisplayName
+}
+
 // Is tells if this role id matches the given one
 func (r Role) Is(rid int64) bool {
 	return r.Rid == rid
