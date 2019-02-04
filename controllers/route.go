@@ -593,6 +593,7 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 		cookie.Domain = auth.SSODomain
 		cookie.Path = "/"
 		cookie.Secure = true
+		cookie.HttpOnly = true
 		http.SetCookie(w, cookie)
 	}
 
