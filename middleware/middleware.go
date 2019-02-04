@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/binodlamsal/gophish/auth"
 	"github.com/binodlamsal/gophish/bakery"
@@ -167,6 +168,10 @@ func SSO(handler http.Handler) http.HandlerFunc {
 
 			if err != nil {
 				log.Error(err)
+				cookie.Value = ""
+				cookie.Expires = time.Unix(0, 0)
+				cookie.MaxAge = -1
+				http.SetCookie(w, cookie)
 				return
 			}
 

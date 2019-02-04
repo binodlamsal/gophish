@@ -485,7 +485,7 @@ func SSO_Login(w http.ResponseWriter, r *http.Request) {
 }
 
 func SSO_Mock(w http.ResponseWriter, r *http.Request) {
-	authenticated := false
+	authenticated := true
 
 	if authenticated {
 		cookie, err := bakery.CreateChocolatechipCookie("eugene")
@@ -522,7 +522,7 @@ func SSO_Mock(w http.ResponseWriter, r *http.Request) {
 		)
 	}
 
-	http.Redirect(w, r, "https://localhost:3333/login", 302)
+	http.Redirect(w, r, "https://localhost:3333/bakery/login", 302)
 }
 
 // Login handles the authentication flow for a user. If credentials are valid,
@@ -590,6 +590,7 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 	if cookie, err := r.Cookie("CHOCOLATECHIPSSL"); err == nil {
 		cookie.Value = ""
 		cookie.Expires = time.Unix(0, 0)
+		cookie.MaxAge = -1
 		cookie.Path = "/"
 		http.SetCookie(w, cookie)
 	}

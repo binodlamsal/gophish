@@ -19,6 +19,7 @@ import (
 
 // Cookie contains props of a Bakery SSO cookie
 type Cookie struct {
+	Raw             string
 	IsOatmeal       bool
 	IsChocolateChip bool
 	User            string
@@ -44,12 +45,14 @@ func Key() string {
 // ParseCookie decrypts an HMAC-signed cookie encrypted with AES-128 (ECB mode),
 // parses the underlying serialized PHP data structure and returns some props wrapped in Cookie type.
 func ParseCookie(cookie string) (*Cookie, error) {
-	c := Cookie{}
 	serialized, err := decrypt(cookie)
 
 	if err != nil {
 		return nil, err
 	}
+
+	c := Cookie{}
+	c.Raw = serialized
 
 	if strings.Contains(serialized, "OATMEALSSL") {
 		c.IsOatmeal = true
