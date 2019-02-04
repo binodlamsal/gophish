@@ -21,10 +21,6 @@ import (
 	"github.com/gorilla/sessions"
 )
 
-const SSODomain = ".everycloudtech.com"                                 // ".localhost"
-const SSOSlaveURL = "https://awareness-test.everycloudtech.com:3333/"   // "https://localhost:3333/"
-const SSOMasterLoginURL = "https://www.everycloudtech.com/bakery/login" // "https://localhost:3333/sso/mock"
-
 func init() {
 	bakery.SetKey(os.Getenv("SSO_KEY"))
 }
@@ -437,6 +433,9 @@ func SSO_Login(w http.ResponseWriter, r *http.Request) {
 			cookie.Value = ""
 			cookie.Expires = time.Unix(0, 0)
 			cookie.MaxAge = -1
+			cookie.Domain = auth.SSODomain
+			cookie.Path = "/"
+			cookie.Secure = true
 			http.SetCookie(w, cookie)
 		}
 
@@ -453,7 +452,7 @@ func SSO_Login(w http.ResponseWriter, r *http.Request) {
 		template.Must(templates, err).ExecuteTemplate(w, "base", params)
 	case r.Method == "POST":
 		username, password := r.FormValue("username"), r.FormValue("password")
-		cookie, err := bakery.CreateOatmealCookie(username, password, "login", SSOSlaveURL)
+		cookie, err := bakery.CreateOatmealCookie(username, password, "login", auth.SSOSlaveURL)
 
 		if err != nil {
 			Flash(w, r, "danger", err.Error())
@@ -473,13 +472,13 @@ func SSO_Login(w http.ResponseWriter, r *http.Request) {
 				w, &http.Cookie{
 					Name:    "OATMEALSSL",
 					Value:   cookie,
-					Domain:  SSODomain,
+					Domain:  auth.SSODomain,
 					Path:    "/",
 					Expires: time.Now().Add(1 * time.Hour),
 				},
 			)
 
-			http.Redirect(w, r, SSOMasterLoginURL, 302)
+			http.Redirect(w, r, auth.SSOMasterLoginURL, 302)
 		}
 	}
 }
@@ -591,7 +590,9 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 		cookie.Value = ""
 		cookie.Expires = time.Unix(0, 0)
 		cookie.MaxAge = -1
+		cookie.Domain = auth.SSODomain
 		cookie.Path = "/"
+		cookie.Secure = true
 		http.SetCookie(w, cookie)
 	}
 
