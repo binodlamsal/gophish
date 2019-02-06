@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/binodlamsal/gophish/auth"
 	"github.com/binodlamsal/gophish/bakery"
 	ctx "github.com/binodlamsal/gophish/context"
 	log "github.com/binodlamsal/gophish/logger"
 	"github.com/binodlamsal/gophish/models"
+	"github.com/binodlamsal/gophish/usersync"
 	"github.com/gorilla/csrf"
 	"github.com/gorilla/sessions"
 )
@@ -164,15 +164,19 @@ func SSO(handler http.Handler) http.HandlerFunc {
 				return
 			}
 
-			user, err := models.GetUserByUsername(c.User)
+			user := models.User{}
+			user, err = models.GetUserByUsername(c.User)
 
 			if err != nil {
-				log.Error(err)
-				cookie.Value = ""
-				cookie.Expires = time.Unix(0, 0)
-				cookie.MaxAge = -1
-				http.SetCookie(w, cookie)
-				return
+				newUser, err := usersync.CreateUser(c.User, c.User, "qwerty", models.Customer)
+
+				if err != nil {
+					log.Error(err)
+					http.Redirect(w, r, "logout", 302)
+					return
+				}
+
+				user = *newUser
 			}
 
 			session := ctx.Get(r, "session").(*sessions.Session)
