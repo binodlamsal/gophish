@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -142,25 +143,41 @@ func RequireLogin(handler http.Handler) http.HandlerFunc {
 // If an email address extracted from such cookie belongs to an existing user
 // then a session is created for that user.
 func SSO(handler http.Handler) http.HandlerFunc {
+	roles := map[string]int{
+		"administrator":           models.Administrator,
+		"Partner":                 models.Partner,
+		"Child User":              models.ChildUser,
+		"LMS User":                models.LMSUser,
+		"Security Awareness User": models.Customer,
+	}
+
 	return func(w http.ResponseWriter, r *http.Request) {
-		defer handler.ServeHTTP(w, r)
+		logoutWithError := func(err error) {
+			log.Error(err)
+			http.Redirect(w, r, "logout", 302)
+		}
 
 		if u := ctx.Get(r, "user"); u == nil {
 			cookie, err := r.Cookie("CHOCOLATECHIPSSL")
 
 			if err != nil {
+				logoutWithError(err)
 				return
 			}
 
 			c, err := bakery.ParseCookie(cookie.Value)
 
 			if err != nil {
-				log.Error(err)
+				if err == bakery.ErrUnknownUserRole {
+					flash(w, r, "info", "Please contact support to access the awareness platform.")
+				}
+
+				logoutWithError(err)
 				return
 			}
 
 			if !c.IsChocolateChip {
-				log.Error("Bad type of SSO cookie")
+				logoutWithError(errors.New("Bad type of SSO cookie"))
 				return
 			}
 
@@ -168,11 +185,17 @@ func SSO(handler http.Handler) http.HandlerFunc {
 			user, err = models.GetUserByUsername(c.User)
 
 			if err != nil {
-				newUser, err := usersync.CreateUser(c.User, c.User, "qwerty", models.Customer)
+				rid, ok := roles[c.Role]
+
+				if !ok {
+					logoutWithError(errors.New("Could not determine user role from the SSO cookie"))
+					return
+				}
+
+				newUser, err := usersync.CreateUser(c.User, c.User, "qwerty", int64(rid))
 
 				if err != nil {
-					log.Error(err)
-					http.Redirect(w, r, "logout", 302)
+					logoutWithError(err)
 					return
 				}
 
@@ -185,6 +208,8 @@ func SSO(handler http.Handler) http.HandlerFunc {
 			http.Redirect(w, r, r.URL.Path, 302)
 		} else if _, err := r.Cookie("CHOCOLATECHIPSSL"); err != nil {
 			http.Redirect(w, r, "logout", 302)
+		} else {
+			handler.ServeHTTP(w, r)
 		}
 	}
 }
@@ -196,4 +221,15 @@ func JSONError(w http.ResponseWriter, c int, m string) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(c)
 	fmt.Fprintf(w, "%s", cj)
+}
+
+func flash(w http.ResponseWriter, r *http.Request, t string, m string) {
+	session := ctx.Get(r, "session").(*sessions.Session)
+
+	session.AddFlash(models.Flash{
+		Type:    t,
+		Message: m,
+	})
+
+	session.Save(r, w)
 }
