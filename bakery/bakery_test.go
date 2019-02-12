@@ -7,7 +7,7 @@ import (
 )
 
 func init() {
-	SetKey("MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCZqp")
+	SetKey("YOURENCRYPTIONKEY")
 }
 
 func TestParseChocolatechipCookie(t *testing.T) {
