@@ -268,7 +268,7 @@ function preview(e) {
   t = templates[e];
   console.log(t);
   $("#modalforpreview .tempname").html(t.name);
-  $("#modalforpreview .from_address").html(t.from_address);
+  $("#modalforpreview .from_address").text(t.from_address);
   $("#modalforpreview .subject").html(t.subject);
   if (t.html != "") {
     $("#modalforpreview .modal-body").html(t.html);
