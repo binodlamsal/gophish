@@ -49,13 +49,6 @@ function save(e) {
 
 function dismiss() {
   $("#targetsTable")
-    .dataTable()
-    .DataTable()
-    .clear()
-    .draw();
-
-  $("#lmsTargetsTable")
-    .dataTable()
     .DataTable()
     .clear()
     .draw();
